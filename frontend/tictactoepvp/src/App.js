@@ -1,24 +1,22 @@
-import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter as Router, Route, Routes} from 'react-router-dom';
+import EnterNick from './screens/EnterNick/EnterNick.tsx';
+import GameBoard from './screens/GameBoard/GameBoard.tsx';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div className="App">
+        <div className='content'>
+          <header className="App-header">
+            <Routes>
+              <Route exact path='/' element={<EnterNick />} />
+              <Route exact path='/game' element={<GameBoard />} />
+            </Routes>
+          </header>
+        </div>
+      </div>
+    </Router>
   );
 }
 
