@@ -1,0 +1,21 @@
+.main-container{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 10;
+}
+
+.input-container{
+    background-color: '#b8c4d6';
+    border-radius: 10;
+    width: '80%';
+}
+
+.cancel-container{
+    width: '20%'
+}
+
+.cancel-button{
+    color: '#0499d4';
+    text-align: 'center';
+    font-size: 15;
+}
