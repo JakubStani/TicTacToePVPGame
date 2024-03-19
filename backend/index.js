@@ -14,12 +14,75 @@ const users = {}
 const gameboards = {}
 const playersInQueue = []
 
+const checkWin = (gameBoardState, xOrO) => {
+    //check if specific player wins
+    if(gameBoardState[0]==xOrO && gameBoardState[4]==xOrO && gameBoardState[8]==xOrO ||
+    gameBoardState[2]==xOrO && gameBoardState[4]==xOrO && gameBoardState[6]==xOrO) {
+      return true;
+    }
+    for(let i=0;i<3;i++) {
+      if(gameBoardState[i]==xOrO && gameBoardState[i+3]==xOrO && gameBoardState[i+6]==xOrO ||
+      gameBoardState[i*3]==xOrO && gameBoardState[i*3+1]==xOrO && gameBoardState[i*3+2]==xOrO)
+      return true;
+    }
+
+    return false;
+}
+
+const checkDraw = (gameBoardState) => {
+    for(let i=0;i<gameBoardState;i++) {
+        if(gameBoardState[i]==='') {
+            return false
+        }
+    }
+    return true
+}
+
+const endGame = (gameUuid, gameResult, winner=null) => {
+    const user1 = users[gameUuid['cross']]
+    const user2 = users[gameUuid['circle']]
+
+    user1['userState'] = 'endedGame'
+    user2['userState'] = 'endedGame'
+
+    delete gameboards[gameUuid]
+    console.log(`Game ${gameUuid} has ended. Winner is ${winner}`)
+
+    //send information to clients, that game ended and who is the winner
+}
+
 const handleMessage = (bytes, uuid) => {
 
     const message = JSON.parse(bytes.toString())
     const user = users[uuid]
 
     console.log(message)
+
+    switch(message['option']) {
+        case 'move':
+            const gameBoard = gameboards[user['gameUuid']]
+
+            //TODO: send clicked index
+            let crosOrCircle =null
+            if(gameBoard[message['index']]==='') {
+                if(gameBoard['cross']===uuid)
+                gameBoard[message['index']]='X';
+                crosOrCircle = 'X'
+            } else {
+                gameBoard[message['index']]='O';
+                crosOrCircle = 'O'
+            }
+
+                if(checkWin(gameBoard['state'], crosOrCircle)) {
+                    endGame(user['gameUuid'], 'win', uuid);
+                } else {
+                    if(checkDraw(gameBoard['state'])){
+                        endGame(user['gameUuid'], 'draw');
+                    }
+                }
+            break
+        default: null
+    }
 
     //here make switch that depend on a message
     //do not forgot about notifyPlayers()
