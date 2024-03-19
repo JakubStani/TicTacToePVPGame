@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import "./NickInput.css"
+import { useNavigate } from 'react-router-dom';
 
 function NickInput({nick, setNick}) {
     const [userInput, setUserInput] = useState('');
+
     return (
         <div>
             <div className='main-container'>
@@ -18,7 +20,7 @@ function NickInput({nick, setNick}) {
                 <div className='cancel-container'>
                     <button
                         className='cancel-button'
-                        onClick={()=>{setNick('')}}
+                        onClick={()=>{setUserInput('')}}
                     >
                         X
                     </button>
