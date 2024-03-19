@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import './GameTile.css'
 
-function GameTile() {
-  const [value, setValue] = useState('')
+function GameTile({value}) {
+  //const [value, setValue] = useState('')
   return (
-    <div className='gt-game-tile' onClick={() =>setValue('X')}>
+    <div className='gt-game-tile'>
         <h1 className='gt-value'>{value}</h1>
     </div>
   )
