@@ -1,7 +1,7 @@
 import './App.css';
 import { BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import EnterNick from './screens/EnterNick/EnterNick.tsx';
-import GameBoard from './screens/GameBoard/GameBoard.tsx';
+import GameBoard from './screens/GameBoard/GameBoard.js';
 import { useEffect, useState } from 'react';
 import useWebSocket from 'react-use-websocket'
 const WS_URL='ws://127.0.0.1:8000'
