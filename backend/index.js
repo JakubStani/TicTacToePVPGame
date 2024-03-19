@@ -30,7 +30,8 @@ const checkWin = (gameBoardState, xOrO) => {
 }
 
 const checkDraw = (gameBoardState) => {
-    for(let i=0;i<gameBoardState;i++) {
+    console.log(`gbstate ${gameBoardState}`)
+    for(let i=0;i<gameBoardState.length;i++) {
         if(gameBoardState[i]==='') {
             return false
         }
@@ -39,8 +40,8 @@ const checkDraw = (gameBoardState) => {
 }
 
 const endGame = (gameUuid, gameResult, winner=null) => {
-    const user1 = users[gameUuid['cross']]
-    const user2 = users[gameUuid['circle']]
+    const user1 = users[gameboards[gameUuid]['X']]
+    const user2 = users[gameboards[gameUuid]['O']]
 
     user1['userState'] = 'endedGame'
     user2['userState'] = 'endedGame'
@@ -48,11 +49,18 @@ const endGame = (gameUuid, gameResult, winner=null) => {
     delete gameboards[gameUuid]
     console.log(`Game ${gameUuid} has ended. Winner is ${winner}`)
 
+    const connection1 = connections[uuid1]
+    const connection2 = connections[uuid2]
+    // const gameState = JSON.stringify({gameData: gameData['state'], userData: user[uuid1]})
+S
+    connection1.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid1]}))
+    connection2.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid2]}))
+
     //send information to clients, that game ended and who is the winner
 }
 
 const handleMessage = (bytes, uuid) => {
-
+    console.log('obsługuję')
     const message = JSON.parse(bytes.toString())
     const user = users[uuid]
 
@@ -64,22 +72,36 @@ const handleMessage = (bytes, uuid) => {
 
             //TODO: send clicked index
             let crosOrCircle =null
-            if(gameBoard[message['index']]==='') {
-                if(gameBoard['cross']===uuid)
-                gameBoard[message['index']]='X';
-                crosOrCircle = 'X'
-            } else {
-                gameBoard[message['index']]='O';
-                crosOrCircle = 'O'
-            }
+            let opponent= null
 
+            
+            // if(gameBoard[message['index']]==='') {
+                if(gameBoard['X']===uuid) {
+                    gameBoard['state'][message['index']]='X';
+                    crosOrCircle = 'X'
+                    opponent = 'O'
+                } else {
+                    gameBoard['state'][message['index']]='O';
+                    crosOrCircle = 'O'
+                    opponent = 'X'
+                }
+                console.log(`aktualny gamestate: ${gameBoard['state']}`)
+                //TODO: notify, whose turn it is
+                users[uuid]['isTheirRound'] = !users[uuid]['isTheirRound']
+                users[gameBoard[opponent]]['isTheirRound'] = !users[gameBoard[opponent]]['isTheirRound']
+                notifyPlayers(uuid, gameBoard[opponent], gameBoard)
                 if(checkWin(gameBoard['state'], crosOrCircle)) {
+                    console.log('wygrana')
                     endGame(user['gameUuid'], 'win', uuid);
                 } else {
                     if(checkDraw(gameBoard['state'])){
+                        console.log('remis')
                         endGame(user['gameUuid'], 'draw');
                     }
                 }
+
+
+            // }
             break
         default: null
     }
@@ -98,14 +120,16 @@ const handleClose = (uuid) => {
         let user2=null
 
         //end game
-        if(closedGame['cross'] === uuid) {
-            user2 = closedGame['circle']
-        } else {
-            user2 = closedGame['cross']
-        }
+        if(closedGame!==null) {
+            if(closedGame['X'] === uuid) {
+                user2 = closedGame['O']
+            } else {
+                user2 = closedGame['X']
+            }
 
-        user2['userState'] = 'endedGame'
-        user2['gameUuid'] = ''
+            user2['userState'] = 'endedGame'
+            user2['gameUuid'] = ''
+        }   
 
         delete gameboards[user['gameUuid']]
     }
@@ -126,8 +150,7 @@ const handleClose = (uuid) => {
 }
 
 const handleQueue = (uuid) => {
-    playersInQueue.push(uuid)
-
+    //console.log(`players: ${playersInQueue}`)
     if(playersInQueue.length>=2) {
         uuid1 = playersInQueue.shift()
         uuid2 = playersInQueue.shift()
@@ -135,22 +158,22 @@ const handleQueue = (uuid) => {
     }
 }
 
-const notifyPlayers = () => {
-    Object.keys(gameboards).forEach(gameData => {
-        const connection1 = connections[gameData['cross']]
-        const connection2 = connections[gameData['circle']]
-        const gameState = JSON.stringify(gameData['state'])
+const notifyPlayers = (uuid1, uuid2, gameData) => {
+    // Object.keys(gameboards).forEach(gameData => {
+        const connection1 = connections[uuid1]
+        const connection2 = connections[uuid2]
+        // const gameState = JSON.stringify({gameData: gameData['state'], userData: user[uuid1]})
 
-        connection1.send(gameState)
-        connection2.send(gameState)
-    })
+        connection1.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid1]}))
+        connection2.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid2]}))
+    // })
 }
 
 const createAGame = (uuid1, uuid2) => {
     const gameUuid = `${uuid1}${uuid2}`
     gameboards[gameUuid] = {
-        cross: uuid1,
-        circle: uuid2, 
+        X: uuid1,
+        O: uuid2, 
         state: ['', '', '', '', '', '', '', '', '']}
     users[uuid1]['userState'] = 'playing'
     users[uuid1]['gameUuid'] = gameUuid
@@ -159,6 +182,9 @@ const createAGame = (uuid1, uuid2) => {
     users[uuid2]['userState'] = 'playing'
     users[uuid2]['gameUuid'] = gameUuid
     users[uuid2]['isTheirRound'] = false
+
+    //TODO: send info to clients, that game has been created
+    notifyPlayers(uuid1, uuid2, gameboards[gameUuid])
 }
 
 wsServer.on('connection', (connection, request) => {
@@ -175,6 +201,9 @@ wsServer.on('connection', (connection, request) => {
         gameUuid: '',
         isTheirRound: null
     }
+
+    playersInQueue.push(uuid)
+    handleQueue(uuid)
 
     connection.on('message', message => handleMessage(message, uuid))
     connection.on('queue', uuid => handleQueue(uuid))
