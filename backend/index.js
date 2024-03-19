@@ -57,7 +57,7 @@ const handleClose = (uuid) => {
     delete connections[uuid]
     delete users[uuid]
 
-    console.log(`User ${user['username']} has disconnected`)
+    console.log(`User ${user['nick']} has disconnected`)
     console.log(`Users left: ${JSON.stringify(users)}`)
 
 }
@@ -91,23 +91,26 @@ const createAGame = (uuid1, uuid2) => {
         state: ['', '', '', '', '', '', '', '', '']}
     users[uuid1]['userState'] = 'playing'
     users[uuid1]['gameUuid'] = gameUuid
+    users[uuid1]['isTheirRound'] = true
 
     users[uuid2]['userState'] = 'playing'
     users[uuid2]['gameUuid'] = gameUuid
+    users[uuid2]['isTheirRound'] = false
 }
 
 wsServer.on('connection', (connection, request) => {
 
-    const {username} = url.parse(request.url, true).query
+    const {nick} = url.parse(request.url, true).query
     const uuid=uuidv4()
-    console.log(username)
+    console.log(nick)
     console.log(uuid)
 
     connections[uuid] = connection
     users[uuid] = {
-        username: username,
+        nick: nick,
         userState: 'waiting',
-        gameUuid: ''
+        gameUuid: '',
+        isTheirRound: null
     }
 
     connection.on('message', message => handleMessage(message, uuid))
