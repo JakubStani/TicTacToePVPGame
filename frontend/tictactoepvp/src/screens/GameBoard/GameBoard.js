@@ -11,6 +11,11 @@ function GameBoard({nick}) {
   const [gameState, setGameState] = useState()
   const [isMyTurn, setIsMyTurn] = useState()
   const [userData, setUserData] = useState()
+  const [opponentData, setOpponentData] = useState()
+  const [isEnd, setIsEnd] = useState()
+  const [winner, setWinner] = useState()
+  const [mark, setMark] = useState()
+  const [gameResult, setGameResult] = useState()
   const WS_URL='ws://127.0.0.1:8000'
 
   const {sendJsonMessage, lastJsonMessage} = useWebSocket(WS_URL, {
@@ -26,10 +31,34 @@ function GameBoard({nick}) {
   useEffect(() => {
     if(lastJsonMessage) {
       console.log(`Last json message: ${JSON.stringify(lastJsonMessage)}`)
-      if(lastJsonMessage['kind']==='update') {
-        setGameState([...lastJsonMessage['gameState']])
-        setUserData(lastJsonMessage['userData'])
+      // if(lastJsonMessage['kind']==='update') {
+      //   setGameState([...lastJsonMessage['gameState']])
+      //   setUserData(lastJsonMessage['userData'])
+      // }
+
+      if(lastJsonMessage['kind']==='endedGame') {
+        setWinner(lastJsonMessage['winner']) 
+        setIsEnd(true)
+        setGameResult(lastJsonMessage['gameResult'])
       }
+
+      setMark(lastJsonMessage['mark'])
+      setGameState([...lastJsonMessage['gameState']])
+      setUserData(lastJsonMessage['userData'])
+      setOpponentData(lastJsonMessage['opponentData'])
+
+      // switch(lastJsonMessage['kind']) {
+      //   case 'update':
+      //     setGameState([...lastJsonMessage['gameState']])
+      //     setUserData(lastJsonMessage['userData'])
+      //     setOpponentData(lastJsonMessage['opponentData'])
+      //     break
+      //   case 'endedGame':
+      //     setGameState([...lastJsonMessage['gameState']])
+      //     setUserData(lastJsonMessage['userData'])
+      //     setOpponentData(lastJsonMessage['opponentData'])
+      //     setWinner(lastJsonMessage['winner'])
+      // }
     }
     console.log(`gamestate changed ${gameState}`)
     
@@ -37,7 +66,6 @@ function GameBoard({nick}) {
   
 
     // const gameState = ['', '', '', '', '', '', '', '', ''];
-    const [isEnd, setIsEnd] = useState(false);
 
     function checkWin() {
       //check if specific player wins
@@ -55,50 +83,58 @@ function GameBoard({nick}) {
     }
   return gameState ? (
     <div className='gb-main-div'>
-      {!isEnd && (
-        <div>
+      <div>
+        {!isEnd && (
           <div>
-            <h1>Player 1 vs Player 2</h1>
-          </div>
-          {userData['isTheirRound'] ? 
-            <div>Your move</div> :
-            <div>Opponent's move</div>}
-            <div className='gb-game-board'>
-                {gameState.map((value, index)=> (
-                  <div className='gb-tile-div' onClick={() =>{ 
-                    if(gameState[index]==='' && userData['isTheirRound']) {
-                      makeAMove(index)
-                    } else{
-                      console.log(`coś poszło nie tak, index: ${index}, gamestate: ${gameState}, ud: ${userData['isTheirRound']}`)
-                    }
-                  }
-                    
-                  //   
-
-                  //   //TODO: send clicked index
-
-                  //   if(gameBoard[index]=='') {
-
-                  //     //TODO: recognize player 1 or player 2 marks
-                  //     gameBoard[index]='X';
-                  //   }
-                  //   if(checkWin()) {
-                  //     setIsEnd(true);
-                  //   }
-                  }>
-                    <GameTile value={gameState[index]} />
-                  </div>  
-                ))}
+            <div>
+              <h1>{userData['nick']} vs {opponentData['nick']}</h1>
             </div>
+            {userData['isTheirRound'] ? 
+              <div>Your move</div> :
+              <div>{opponentData['nick']}'s move</div>
+            }
           </div>
-          )
-        }
-        {isEnd && (
+          )}
+
+        {isEnd && winner && (
           //TODO: recognize which player has won
           <div>
-            <h1>Player 1 has won!</h1>
+            <h1>Player {winner} has won!</h1>
           </div>
         )}
+        {isEnd && !winner && (
+          //TODO: recognize which player has won
+          <div>
+            <h1>{gameResult}</h1>
+          </div>
+        )}
+        <div>Your mark: {mark}</div>
+          <div className='gb-game-board'>
+              {gameState.map((value, index)=> (
+                <div className='gb-tile-div' onClick={() =>{ 
+                  if(gameState[index]==='' && userData['isTheirRound'] && !isEnd) {
+                    makeAMove(index)
+                  }
+                }
+                  
+                //   
+
+                //   //TODO: send clicked index
+
+                //   if(gameBoard[index]=='') {
+
+                //     //TODO: recognize player 1 or player 2 marks
+                //     gameBoard[index]='X';
+                //   }
+                //   if(checkWin()) {
+                //     setIsEnd(true);
+                //   }
+                }>
+                  <GameTile value={gameState[index]} />
+                </div>  
+              ))}
+          </div>
+        </div>
     </div>
   ) : ( <WaitForGame nick={nick} />)
 }

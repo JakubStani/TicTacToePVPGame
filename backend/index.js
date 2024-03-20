@@ -46,15 +46,16 @@ const endGame = (gameUuid, gameResult, winner=null) => {
     user1['userState'] = 'endedGame'
     user2['userState'] = 'endedGame'
 
-    delete gameboards[gameUuid]
     console.log(`Game ${gameUuid} has ended. Winner is ${winner}`)
 
     const connection1 = connections[uuid1]
     const connection2 = connections[uuid2]
     // const gameState = JSON.stringify({gameData: gameData['state'], userData: user[uuid1]})
-S
-    connection1.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid1]}))
-    connection2.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid2]}))
+
+    connection1.send(JSON.stringify({kind: 'endedGame', gameState: gameboards[gameUuid]['state'], userData: users[uuid1], winner: users[winner] ? users[winner]['nick'] : null, mark: 'X', gameResult: gameResult}))
+    connection2.send(JSON.stringify({kind: 'endedGame', gameState: gameboards[gameUuid]['state'], userData: users[uuid2], winner: users[winner] ? users[winner]['nick']: null, mark: 'O', gameResult: gameResult}))
+
+    delete gameboards[gameUuid]
 
     //send information to clients, that game ended and who is the winner
 }
@@ -89,14 +90,14 @@ const handleMessage = (bytes, uuid) => {
                 //TODO: notify, whose turn it is
                 users[uuid]['isTheirRound'] = !users[uuid]['isTheirRound']
                 users[gameBoard[opponent]]['isTheirRound'] = !users[gameBoard[opponent]]['isTheirRound']
-                notifyPlayers(uuid, gameBoard[opponent], gameBoard)
+                notifyPlayers(uuid, crosOrCircle==='X'?'X': 'O', gameBoard[opponent], opponent==='O'?'O':'X', gameBoard)
                 if(checkWin(gameBoard['state'], crosOrCircle)) {
                     console.log('wygrana')
-                    endGame(user['gameUuid'], 'win', uuid);
+                    endGame(user['gameUuid'], 'Win', uuid);
                 } else {
                     if(checkDraw(gameBoard['state'])){
                         console.log('remis')
-                        endGame(user['gameUuid'], 'draw');
+                        endGame(user['gameUuid'], 'Draw');
                     }
                 }
 
@@ -117,21 +118,23 @@ const handleClose = (uuid) => {
     //not only delete user, but end game too
     if(user['userState'] === 'playing') {
 
-        let user2=null
+        // let user2=null
 
-        //end game
-        if(closedGame!==null) {
-            if(closedGame['X'] === uuid) {
-                user2 = closedGame['O']
-            } else {
-                user2 = closedGame['X']
-            }
+        // //end game
+        // if(closedGame!==null) {
+        //     if(closedGame['X'] === uuid) {
+        //         user2 = closedGame['O']
+        //     } else {
+        //         user2 = closedGame['X']
+        //     }
 
-            user2['userState'] = 'endedGame'
-            user2['gameUuid'] = ''
-        }   
+        //     user2['userState'] = 'endedGame'
+        //     user2['gameUuid'] = ''
+        // }   
 
-        delete gameboards[user['gameUuid']]
+        // delete gameboards[user['gameUuid']]
+
+        endGame(user['gameUuid'], 'Game interrupted')
     }
     //delete user from queue
     else {
@@ -158,14 +161,14 @@ const handleQueue = (uuid) => {
     }
 }
 
-const notifyPlayers = (uuid1, uuid2, gameData) => {
+const notifyPlayers = (uuid1, cross, uuid2, circle, gameData) => {
     // Object.keys(gameboards).forEach(gameData => {
         const connection1 = connections[uuid1]
         const connection2 = connections[uuid2]
         // const gameState = JSON.stringify({gameData: gameData['state'], userData: user[uuid1]})
 
-        connection1.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid1]}))
-        connection2.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid2]}))
+        connection1.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid1], opponentData: users[uuid2], mark: cross}))
+        connection2.send(JSON.stringify({kind: 'update', gameState: gameData['state'], userData: users[uuid2], opponentData: users[uuid1], mark: circle}))
     // })
 }
 
@@ -184,7 +187,7 @@ const createAGame = (uuid1, uuid2) => {
     users[uuid2]['isTheirRound'] = false
 
     //TODO: send info to clients, that game has been created
-    notifyPlayers(uuid1, uuid2, gameboards[gameUuid])
+    notifyPlayers(uuid1, 'X', uuid2, 'O', gameboards[gameUuid])
 }
 
 wsServer.on('connection', (connection, request) => {
@@ -199,7 +202,8 @@ wsServer.on('connection', (connection, request) => {
         nick: nick,
         userState: 'waiting',
         gameUuid: '',
-        isTheirRound: null
+        isTheirRound: null,
+        xOrC: null
     }
 
     playersInQueue.push(uuid)
