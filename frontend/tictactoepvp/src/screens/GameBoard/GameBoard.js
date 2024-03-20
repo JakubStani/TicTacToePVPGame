@@ -16,7 +16,7 @@ function GameBoard({nick}) {
   const [winner, setWinner] = useState()
   const [mark, setMark] = useState()
   const [gameResult, setGameResult] = useState()
-  const WS_URL='ws://127.0.0.1:8000'
+  const WS_URL='ws://backend:8000'
 
   const {sendJsonMessage, lastJsonMessage} = useWebSocket(WS_URL, {
     queryParams: {nick},
