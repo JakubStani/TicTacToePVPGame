@@ -7,6 +7,8 @@ services:
       - "3000:3000"
     networks:
     - tictactoepvp
+    depends_on:
+      - backend
   backend: 
     image: "backend"
     ports:
