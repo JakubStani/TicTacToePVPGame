@@ -2,6 +2,7 @@ FROM node:18-alpine
 
 WORKDIR usr/src/frontend/tictactoepvp
 
+COPY package.json .
 COPY package-lock.json .
 
 RUN npm install
