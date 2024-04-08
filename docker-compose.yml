@@ -1,7 +1,7 @@
 version: "3"
 services:
   frontend: 
-    image: jakubstani/frontendtictactoepvp
+    image: jakubstani/frontendtictactoepvp:lat
     stdin_open: true
     ports: 
       - "3000:3000"
@@ -10,7 +10,7 @@ services:
     depends_on:
       - backend
   backend: 
-    image: jakubstani/backend
+    image: jakubstani/backend:lat
     ports:
       - "8000:8000"
     networks:
