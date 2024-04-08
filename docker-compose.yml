@@ -8,7 +8,7 @@ services:
     networks:
     - tictactoepvp
     depends_on:
-      - jakubstani/backend
+      - backend
   backend: 
     image: jakubstani/backend
     ports:
