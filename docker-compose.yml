@@ -1,16 +1,16 @@
 version: "3"
 services:
   frontend: 
-    image: frontendtictactoepvp
+    image: jakubstani/frontendtictactoepvp
     stdin_open: true
     ports: 
       - "3000:3000"
     networks:
     - tictactoepvp
     depends_on:
-      - backend
+      - jakubstani/backend
   backend: 
-    image: backend
+    image: jakubstani/backend
     ports:
       - "8000:8000"
     networks:
