@@ -10,7 +10,7 @@ services:
     depends_on:
       - backend
   backend: 
-    image: jakubstani/backend:lat
+    image: jakubstani/backend:v2
     ports:
       - "8000:8000"
     networks:
