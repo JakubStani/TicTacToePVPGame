@@ -28,7 +28,7 @@ const checkWin = (gameBoardState, xOrO) => {
 
     return false;
 }
-
+//
 const checkDraw = (gameBoardState) => {
     console.log(`gbstate ${gameBoardState}`)
     for(let i=0;i<gameBoardState.length;i++) {
