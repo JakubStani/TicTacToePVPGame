@@ -4,6 +4,7 @@ import '../../components/GameTile/GameTile.tsx';
 import GameTile from '../../components/GameTile/GameTile.tsx';
 import useWebSocket from 'react-use-websocket'
 import WaitForGame from '../../components/WaitForGame/WaitForGame.tsx';
+const axios = require('axios')
 
 function GameBoard({nick}) {
   //const [isMatchFound, setIsMatchFound] = useState(false)
@@ -16,7 +17,23 @@ function GameBoard({nick}) {
   const [winner, setWinner] = useState()
   const [mark, setMark] = useState()
   const [gameResult, setGameResult] = useState()
-  const WS_URL='ws://127.0.0.1:8000'
+
+  const [pubId, setPubId] = useState()
+
+  const getPubId=()=> {
+    axios.get('http://169.254.169.254/latest/meta-data/public-ipv4')
+      .then(response => {
+        setPubId(response.data)
+        console.log(`Public IP: ${response.data}`)
+        return response.data
+      })
+      .catch(error => {
+        console.log(`error while catching IP data: ${error}`)
+      })
+  }
+
+  const WS_URL=`ws://${getPubId()}:8000`
+  console.log(`wsUrl ${WS_URL}`)
 
   const {sendJsonMessage, lastJsonMessage} = useWebSocket(WS_URL, {
     queryParams: {nick},
