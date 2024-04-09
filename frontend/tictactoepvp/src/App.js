@@ -9,16 +9,18 @@ import axios from 'axios'
 function App() {
   const [nick, setNick] = useState('')
   const [wsConnection, setWsConnection] = useState()
-  const [WS_URL, setWS_URL]=useState('ws://127.0.0.1:8000')
+  const ipAddress = window.location.hostname;
+  console.log('Adres IP instancji EC2:', ipAddress);
+  const [WS_URL, setWS_URL]=useState(`ws://${ipAddress}:8000`)
 
-  axios.get('http://169.254.169.254/latest/meta-data/public-ipv4')
-      .then(response => {
-        console.log(`Public IP: ${response.data}`)
-        setWS_URL(response.data)
-      })
-      .catch(error => {
-        console.log(`error while catching IP data: ${error}`)
-      })
+  // axios.get('http://169.254.169.254/latest/meta-data/public-ipv4')
+  //     .then(response => {
+  //       console.log(`Public IP: ${response.data}`)
+  //       setWS_URL(response.data)
+  //     })
+  //     .catch(error => {
+  //       console.log(`error while catching IP data: ${error}`)
+  //     })
   
 
   // const enterNick = (nick) => {
