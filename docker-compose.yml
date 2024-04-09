@@ -1,7 +1,7 @@
 version: "3"
 services:
   frontend: 
-    image: jakubstani/frontendtictactoepvp:lat
+    image: jakubstani/frontendtictactoepvp:v2
     stdin_open: true
     ports: 
       - "3000:3000"
