@@ -4,10 +4,22 @@ import EnterNick from './screens/EnterNick/EnterNick.tsx';
 import GameBoard from './screens/GameBoard/GameBoard.js';
 import { useEffect, useState } from 'react';
 import useWebSocket from 'react-use-websocket'
-const WS_URL='ws://127.0.0.1:8000'
+import axios from 'axios'
+// const WS_URL='ws://127.0.0.1:8000'
 function App() {
   const [nick, setNick] = useState('')
   const [wsConnection, setWsConnection] = useState()
+  const [WS_URL, setWS_URL]=useState('ws://127.0.0.1:8000')
+
+  axios.get('http://169.254.169.254/latest/meta-data/public-ipv4')
+      .then(response => {
+        console.log(`Public IP: ${response.data}`)
+        setWS_URL(response.data)
+      })
+      .catch(error => {
+        console.log(`error while catching IP data: ${error}`)
+      })
+  
 
   // const enterNick = (nick) => {
   //   if(nick!=='') {
@@ -26,7 +38,7 @@ function App() {
         {nick==='' ? (
           <EnterNick nick={nick} setNick={setNick} />
         ) : (
-          <GameBoard nick={nick}/>
+          <GameBoard nick={nick} WS_URL={WS_URL}/>
         )}
         </header>
       </div>
