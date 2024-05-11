@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import "./SignUp.css";
+import UserPool from "../../auth/UserPool";
+
+const AmazonCognitoIdentity = require("amazon-cognito-identity-js");
 
 function SignUp(props) {
   const [email, setEmail] = useState("");
@@ -8,6 +11,24 @@ function SignUp(props) {
 
   const onSubmit = (event) => {
     event.preventDefault();
+
+    const attributeList = [
+      new AmazonCognitoIdentity.CognitoUserAttribute({
+        Name: "nickname",
+        Value: nick,
+      }),
+      new AmazonCognitoIdentity.CognitoUserAttribute({
+        Name: "email",
+        Value: email,
+      }),
+    ];
+
+    UserPool.signUp(nick, password, attributeList, null, (error, data) => {
+      if (error) {
+        console.error(error);
+      }
+      console.log(data);
+    });
 
     props.setIsAuthenticated(true);
     props.setShowSignIn(true);
