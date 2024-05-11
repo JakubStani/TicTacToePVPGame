@@ -18,7 +18,8 @@ const AmazonCognitoIdentity = require("amazon-cognito-identity-js");
 
 // const WS_URL='ws://127.0.0.1:8000'
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticationRequested, setIsAuthenticationRequested] =
+    useState(false);
   const [showSignIn, setShowSignIn] = useState(true);
   const [nick, setNick] = useState("");
   const [wsConnection, setWsConnection] = useState();
@@ -80,24 +81,20 @@ function App() {
     <div className="App">
       <div className="content">
         <header className="App-header">
-          {isAuthenticated ? (
-            nick === "" ? (
-              <EnterNick nick={nick} setNick={setNick} />
-            ) : (
-              <GameBoard nick={nick} WS_URL={WS_URL} />
-            )
+          {isAuthenticationRequested ? (
+            <GameBoard nick={nick} WS_URL={WS_URL} />
           ) : showSignIn ? (
             <SignIn
-              isAuthenticated={isAuthenticated}
-              setIsAuthenticated={setIsAuthenticated}
+              isAuthenticated={isAuthenticationRequested}
+              setIsAuthenticated={setIsAuthenticationRequested}
               showSignIn={showSignIn}
               setShowSignIn={setShowSignIn}
               saveUserCredentials={saveUserCredentials}
             />
           ) : (
             <SignUp
-              isAuthenticated={isAuthenticated}
-              setIsAuthenticated={setIsAuthenticated}
+              isAuthenticated={isAuthenticationRequested}
+              setIsAuthenticated={setIsAuthenticationRequested}
               showSignIn={showSignIn}
               setShowSignIn={setShowSignIn}
               saveUserCredentials={saveUserCredentials}
