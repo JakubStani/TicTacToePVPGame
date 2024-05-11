@@ -23,9 +23,13 @@ function SignIn(props) {
     user.authenticateUser(authDetails, {
       onSuccess: (data) => {
         console.log("Success ", data);
-        console.log(data.getIdToken().getJwtToken());
-        console.log(data.getAccessToken().getJwtToken());
-        console.log(data.getRefreshToken().getToken());
+
+        props.saveUserCredentials(
+          data.getIdToken().getJwtToken(),
+          data.getAccessToken().getJwtToken(),
+          data.getRefreshToken().getToken()
+        );
+        console.log(data.isValid());
         //localStorage.setItem('accessToken-tttpvp', data[])
       },
       onFailure: (error) => {

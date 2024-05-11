@@ -28,6 +28,12 @@ function SignUp(props) {
         console.error(error);
       }
       console.log(data);
+
+      props.saveUserCredentials(
+        data.getIdToken().getJwtToken(),
+        data.getAccessToken().getJwtToken(),
+        data.getRefreshToken().getToken()
+      );
     });
 
     props.setIsAuthenticated(true);
