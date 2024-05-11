@@ -12,32 +12,39 @@ function SignUp(props) {
   const onSubmit = (event) => {
     event.preventDefault();
 
-    const attributeList = [
-      new AmazonCognitoIdentity.CognitoUserAttribute({
-        Name: "nickname",
-        Value: nick,
-      }),
-      new AmazonCognitoIdentity.CognitoUserAttribute({
-        Name: "email",
-        Value: email,
-      }),
-    ];
-
-    UserPool.signUp(nick, password, attributeList, null, (error, data) => {
-      if (error) {
-        console.error(error);
-      }
-      console.log(data);
-
-      props.saveUserCredentials(
-        data.getIdToken().getJwtToken(),
-        data.getAccessToken().getJwtToken(),
-        data.getRefreshToken().getToken()
-      );
+    props.sendJsonMessage({
+      option: "signUp",
+      nick: nick,
+      email: email,
+      password: password,
     });
 
-    props.setIsAuthenticated(true);
-    props.setShowSignIn(true);
+    // const attributeList = [
+    //   new AmazonCognitoIdentity.CognitoUserAttribute({
+    //     Name: "nickname",
+    //     Value: nick,
+    //   }),
+    //   new AmazonCognitoIdentity.CognitoUserAttribute({
+    //     Name: "email",
+    //     Value: email,
+    //   }),
+    // ];
+
+    // UserPool.signUp(nick, password, attributeList, null, (error, data) => {
+    //   if (error) {
+    //     console.error(error);
+    //   }
+    //   console.log(data);
+
+    //   props.saveUserCredentials(
+    //     data.getIdToken().getJwtToken(),
+    //     data.getAccessToken().getJwtToken(),
+    //     data.getRefreshToken().getToken()
+    //   );
+    // });
+
+    // props.setIsAuthenticated(true);
+    // props.setShowSignIn(true);
   };
 
   return (

@@ -10,35 +10,41 @@ function SignIn(props) {
   const onSubmit = (event) => {
     event.preventDefault();
 
-    const user = new CognitoUser({
-      Username: nick,
-      Pool: UserPool,
+    props.sendJsonMessage({
+      option: "signIn",
+      nick: nick,
+      password: password,
     });
 
-    const authDetails = new AuthenticationDetails({
-      Username: nick,
-      Password: password,
-    });
+    // const user = new CognitoUser({
+    //   Username: nick,
+    //   Pool: UserPool,
+    // });
 
-    user.authenticateUser(authDetails, {
-      onSuccess: (data) => {
-        console.log("Success ", data);
+    // const authDetails = new AuthenticationDetails({
+    //   Username: nick,
+    //   Password: password,
+    // });
 
-        props.saveUserCredentials(
-          data.getIdToken().getJwtToken(),
-          data.getAccessToken().getJwtToken(),
-          data.getRefreshToken().getToken()
-        );
-        console.log(data.isValid());
-        //localStorage.setItem('accessToken-tttpvp', data[])
-      },
-      onFailure: (error) => {
-        console.error("Error ", error);
-      },
-    });
+    // user.authenticateUser(authDetails, {
+    //   onSuccess: (data) => {
+    //     console.log("Success ", data);
 
-    props.setIsAuthenticated(true);
-    props.setShowSignIn(true);
+    //     props.saveUserCredentials(
+    //       data.getIdToken().getJwtToken(),
+    //       data.getAccessToken().getJwtToken(),
+    //       data.getRefreshToken().getToken()
+    //     );
+    //     console.log(data.isValid());
+    //     //localStorage.setItem('accessToken-tttpvp', data[])
+    //   },
+    //   onFailure: (error) => {
+    //     console.error("Error ", error);
+    //   },
+    // });
+
+    // props.setIsAuthenticated(true);
+    // props.setShowSignIn(true);
   };
 
   return (

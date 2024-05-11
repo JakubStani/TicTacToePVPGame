@@ -26,6 +26,7 @@ function App() {
   const ipAddress = window.location.hostname;
   console.log("Adres IP instancji EC2:", ipAddress);
   const [WS_URL, setWS_URL] = useState(`ws://${ipAddress}:8000`);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const saveUserCredentials = (idToken, accessToken, refreshToken) => {
     localStorage.setItem("idToken-tttpvp", idToken);
@@ -33,27 +34,45 @@ function App() {
     localStorage.setItem("refreshToken-tttpvp", refreshToken);
   };
 
+  const { sendJsonMessage, lastJsonMessage } = useWebSocket(WS_URL, {
+    queryParams: {},
+    share: true,
+  });
+
+  useEffect(() => {
+    if (lastJsonMessage != null) {
+      if (
+        lastJsonMessage["kind"] == "signUpAnswer" ||
+        lastJsonMessage["kind"] == "signInAnswer" ||
+        lastJsonMessage["kind"] == "refreshTokenAnswer"
+      ) {
+        setIsAuthenticated(true);
+        if (lastJsonMessage["data"] != null) {
+          const data = lastJsonMessage["data"];
+          saveUserCredentials(
+            data["idToken"],
+            data["accessToken"],
+            data["refreshToken"]
+          );
+          if (!isAuthenticationRequested) {
+            setIsAuthenticationRequested(true);
+          }
+          if (!showSignIn) {
+            setShowSignIn(true);
+          }
+        } else {
+          console.error(lastJsonMessage["error"]);
+        }
+      }
+    }
+  }, [lastJsonMessage]);
+
   const useRefreshToken = () => {
     let refreshToken = localStorage.getItem("refreshToken-tttpvp");
     if (refreshToken != null) {
-      const user = new CognitoUser({
-        Username: nick,
-        Pool: UserPool,
-      });
-      refreshToken = new AmazonCognitoIdentity.CognitoRefreshToken({
-        RefreshToken: refreshToken,
-      });
-      user.refreshSession(refreshToken, (error, session) => {
-        if (error) {
-          console.error("Error", error);
-        } else {
-          console.log(session);
-          saveUserCredentials(
-            session.getIdToken().getJwtToken(),
-            session.getAccessToken().getJwtToken(),
-            session.getRefreshToken().getToken()
-          );
-        }
+      sendJsonMessage({
+        option: "useRefreshToken",
+        refreshToken: refreshToken,
       });
     }
     return false;
@@ -82,7 +101,13 @@ function App() {
       <div className="content">
         <header className="App-header">
           {isAuthenticationRequested ? (
-            <GameBoard nick={nick} WS_URL={WS_URL} />
+            <GameBoard
+              nick={nick}
+              WS_URL={WS_URL}
+              lastJsonMessage={lastJsonMessage}
+              sendJsonMessage={sendJsonMessage}
+              isAuthenticated={isAuthenticated}
+            />
           ) : showSignIn ? (
             <SignIn
               isAuthenticated={isAuthenticationRequested}
@@ -90,6 +115,8 @@ function App() {
               showSignIn={showSignIn}
               setShowSignIn={setShowSignIn}
               saveUserCredentials={saveUserCredentials}
+              lastJsonMessage={lastJsonMessage}
+              sendJsonMessage={sendJsonMessage}
             />
           ) : (
             <SignUp
@@ -98,6 +125,8 @@ function App() {
               showSignIn={showSignIn}
               setShowSignIn={setShowSignIn}
               saveUserCredentials={saveUserCredentials}
+              lastJsonMessage={lastJsonMessage}
+              sendJsonMessage={sendJsonMessage}
             />
           )}
         </header>
