@@ -15,6 +15,10 @@ import {
 } from "amazon-cognito-identity-js";
 
 const AmazonCognitoIdentity = require("amazon-cognito-identity-js");
+const uuidv4 = require("uuid").v4;
+
+//unique id for client
+const uuid = uuidv4();
 
 // const WS_URL='ws://127.0.0.1:8000'
 function App() {
@@ -29,15 +33,31 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const saveUserCredentials = (idToken, accessToken, refreshToken) => {
-    localStorage.setItem("idToken-tttpvp", idToken);
-    localStorage.setItem("accessToken-tttpvp", accessToken);
-    localStorage.setItem("refreshToken-tttpvp", refreshToken);
+    // localStorage.setItem(`idToken-tttpvp-${uuid}`, idToken);
+    localStorage.setItem(`accessToken-tttpvp-${uuid}`, accessToken);
+    localStorage.setItem(`refreshToken-tttpvp-${uuid}`, refreshToken);
   };
 
   const { sendJsonMessage, lastJsonMessage } = useWebSocket(WS_URL, {
     queryParams: {},
     share: true,
   });
+
+  window.addEventListener("beforeunload", (ev) => {
+    removeLocalStorageGameItems();
+  });
+
+  const removeLocalStorageGameItems = () => {
+    localStorage.removeItem(`accessToken-tttpvp-${uuid}`);
+    localStorage.removeItem(`refreshToken-tttpvp-${uuid}`);
+  };
+
+  const logOut = () => {
+    setShowSignIn(true);
+    setIsAuthenticated(false);
+    setIsAuthenticationRequested(false);
+    removeLocalStorageGameItems();
+  };
 
   useEffect(() => {
     if (lastJsonMessage != null) {
@@ -82,7 +102,7 @@ function App() {
   }, [lastJsonMessage]);
 
   const funUseRefreshToken = () => {
-    const refreshToken = localStorage.getItem("refreshToken-tttpvp");
+    const refreshToken = localStorage.getItem(`refreshToken-tttpvp-${uuid}`);
     if (refreshToken != null) {
       sendJsonMessage({
         option: "useRefreshToken",
@@ -121,6 +141,8 @@ function App() {
               lastJsonMessage={lastJsonMessage}
               sendJsonMessage={sendJsonMessage}
               isAuthenticated={isAuthenticated}
+              uuid={uuid}
+              logOut={logOut}
             />
           ) : showSignIn ? (
             <SignIn
