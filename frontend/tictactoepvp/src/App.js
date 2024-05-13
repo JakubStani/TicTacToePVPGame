@@ -42,7 +42,6 @@ function App() {
   useEffect(() => {
     if (lastJsonMessage != null) {
       if (
-        lastJsonMessage["kind"] == "signUpAnswer" ||
         lastJsonMessage["kind"] == "signInAnswer" ||
         lastJsonMessage["kind"] == "refreshTokenAnswer"
       ) {
@@ -62,6 +61,12 @@ function App() {
           }
         } else {
           console.error(lastJsonMessage["error"]);
+        }
+      } else {
+        if (lastJsonMessage["kind"] == "signUpAnswer") {
+          if (lastJsonMessage["error"] == null) {
+            setShowSignIn(true);
+          }
         }
       }
     }

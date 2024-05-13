@@ -41,36 +41,23 @@ const signUp = (nick, email, password) => {
       Value: email,
     }),
   ];
-  let toReturn = null;
-  let signUpErrorMessage = "Sign in error";
   const signUpConnection = connections[uuid];
   userPool.signUp(nick, password, attributeList, null, (error, data) => {
     if (error) {
       console.error(error);
-      answerUser(
-        nick,
-        signUpConnection,
-        "signUpAnswer",
-        toReturn,
-        signUpErrorMessage
-      );
+      answerUser(null, signUpConnection, "signUpAnswer", null, "Sign in error");
     } else {
       signUpErrorMessage = null;
       if (data != null) {
         users[uuid]["nick"] = nick;
+        users[uuid]["session"] = data;
       }
-      toReturn = {
+      const toReturn = {
         idToken: "jednakBez",
         accessToken: data.getAccessToken().getJwtToken(),
         refreshToken: data.getRefreshToken().getToken(),
       };
-      answerUser(
-        nick,
-        signUpConnection,
-        "signUpAnswer",
-        toReturn,
-        signUpErrorMessage
-      );
+      answerUser(nick, signUpConnection, "signUpAnswer", toReturn, null);
     }
   });
 };
