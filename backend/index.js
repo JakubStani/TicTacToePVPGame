@@ -7,8 +7,8 @@ const url = require("url");
 const uuidv4 = require("uuid").v4;
 
 const serverConfig = {
-  key: fs.readFileSync("~/key.pem"),
-  cert: fs.readFileSync("~/cert.pem"),
+  key: fs.readFileSync("/home/user/key.pem"),
+  cert: fs.readFileSync("/home/user/cert.pem"),
 };
 
 const server = https.createServer(serverConfig);
@@ -32,8 +32,8 @@ const { access } = require("fs");
 AWS.config.region = "us-east-1";
 
 const poolData = {
-  UserPoolId: "us-east-1_KmFNDBQ2I",
-  ClientId: "ombf8o3allqd0082u3rbadbin",
+  UserPoolId: "us-east-1_Y8FANHfqs",
+  ClientId: "itnlecb3ctos3a6vo3mtm1m58",
 };
 
 const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
@@ -61,7 +61,7 @@ const signUp = (uuid, nick, email, password) => {
 };
 
 const signIn = (uuid, nick, password) => {
-  console.log(`trying to sign in with: ${nick} and ${password}`);
+  // console.log(`trying to sign in with: ${nick} and ${password}`);
   try {
     cognitoUser = new AmazonCognitoIdentity.CognitoUser({
       Username: nick,
@@ -77,7 +77,7 @@ const signIn = (uuid, nick, password) => {
     let toReturn = null;
     cognitoUser.authenticateUser(authDetails, {
       onSuccess: (session) => {
-        console.log("Success ", session);
+        // console.log("Success ", session);
         users[uuid]["nick"] = nick;
         users[uuid]["session"] = session;
         toReturn = {
@@ -176,7 +176,7 @@ const checkWin = (gameBoardState, xOrO) => {
 };
 //
 const checkDraw = (gameBoardState) => {
-  console.log(`gbstate ${gameBoardState}`);
+  // console.log(`gbstate ${gameBoardState}`);
   for (let i = 0; i < gameBoardState.length; i++) {
     if (gameBoardState[i] === "") {
       return false;
@@ -196,7 +196,7 @@ const endGame = (gameUuid, gameResult, winner = null) => {
     user1["userState"] = "endedGame";
     user2["userState"] = "endedGame";
 
-    console.log(`Game ${gameUuid} has ended. Winner is ${winner}`);
+    // console.log(`Game ${gameUuid} has ended. Winner is ${winner}`);
 
     const connection1 = connections[uuid1];
     const connection2 = connections[uuid2];
@@ -229,18 +229,18 @@ const endGame = (gameUuid, gameResult, winner = null) => {
 };
 
 const handleMessage = (bytes, uuid) => {
-  console.log("obsługuję");
+  // console.log("obsługuję");
   const message = JSON.parse(bytes.toString());
   const user = users[uuid];
 
-  console.log(message);
+  // console.log(message);
 
   switch (message["option"]) {
     case "move":
-      console.log("move?");
+      // console.log("move?");
       if (user["session"].isValid()) {
         if (validateAccessToken(uuid, message["accessToken"])) {
-          console.log("Access token się zgadza");
+          // console.log("Access token się zgadza");
           const gameBoard = gameboards[user["gameUuid"]];
 
           //TODO: send clicked index
@@ -257,7 +257,7 @@ const handleMessage = (bytes, uuid) => {
             crosOrCircle = "O";
             opponent = "X";
           }
-          console.log(`aktualny gamestate: ${gameBoard["state"]}`);
+          // console.log(`aktualny gamestate: ${gameBoard["state"]}`);
           //TODO: notify, whose turn it is
           users[uuid]["isTheirRound"] = !users[uuid]["isTheirRound"];
           users[gameBoard[opponent]]["isTheirRound"] =
@@ -270,21 +270,21 @@ const handleMessage = (bytes, uuid) => {
             gameBoard
           );
           if (checkWin(gameBoard["state"], crosOrCircle)) {
-            console.log("wygrana");
+            // console.log("wygrana");
             endGame(user["gameUuid"], "Win", uuid);
           } else {
             if (checkDraw(gameBoard["state"])) {
-              console.log("remis");
+              // console.log("remis");
               endGame(user["gameUuid"], "Draw");
             }
           }
         } else {
-          console.log(
-            "Invalid access token",
-            message["accessToken"],
-            "właściwy access token:",
-            user["session"].getAccessToken().getJwtToken()
-          );
+          // console.log(
+          //   "Invalid access token",
+          //   message["accessToken"],
+          //   "właściwy access token:",
+          //   user["session"].getAccessToken().getJwtToken()
+          // );
           answerUser(
             null,
             connections[uuid],
@@ -294,7 +294,7 @@ const handleMessage = (bytes, uuid) => {
           );
         }
       } else {
-        console.log("Sesja nie jest ważna");
+        // console.log("Sesja nie jest ważna");
         user["lastMessage"] = JSON.stringify(message);
         answerUser(
           null,
@@ -309,7 +309,7 @@ const handleMessage = (bytes, uuid) => {
       break;
 
     case "signUp":
-      console.log("signUp?");
+      // console.log("signUp?");
       const signUpData = signUp(
         uuid,
         message["nick"],
@@ -319,7 +319,7 @@ const handleMessage = (bytes, uuid) => {
       break;
 
     case "signIn":
-      console.log("signIn?");
+      // console.log("signIn?");
       signIn(uuid, message["nick"], message["password"]);
       break;
     // case "useRefreshToken":
@@ -334,7 +334,7 @@ const handleMessage = (bytes, uuid) => {
     //   );
     //   break;
     case "loadGame":
-      console.log("load game request");
+      // console.log("load game request");
       playersInQueue.push(uuid);
       handleQueue(uuid);
       break;
@@ -442,8 +442,6 @@ const notifyPlayers = (uuid1, cross, uuid2, circle, gameData) => {
       mark: circle,
     })
   );
-  console.log();
-  // })
 };
 
 const createAGame = (uuid1, uuid2) => {

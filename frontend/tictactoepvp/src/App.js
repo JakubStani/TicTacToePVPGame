@@ -1,18 +1,9 @@
 import "./App.css";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import EnterNick from "./screens/EnterNick/EnterNick.tsx";
 import GameBoard from "./screens/GameBoard/GameBoard.js";
 import { useEffect, useState } from "react";
 import useWebSocket from "react-use-websocket";
-import axios from "axios";
 import SignIn from "./screens/SignIn/SignIn.js";
 import SignUp from "./screens/SignUp/SignUp.js";
-import UserPool from "./auth/UserPool.js";
-import {
-  CognitoUser,
-  AuthenticationDetails,
-  CognitoRefreshToken,
-} from "amazon-cognito-identity-js";
 
 const AmazonCognitoIdentity = require("amazon-cognito-identity-js");
 const uuidv4 = require("uuid").v4;
