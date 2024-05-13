@@ -1,8 +1,5 @@
 import React, { useState } from "react";
 import "./SignUp.css";
-import UserPool from "../../auth/UserPool";
-
-const AmazonCognitoIdentity = require("amazon-cognito-identity-js");
 
 function SignUp(props) {
   const [email, setEmail] = useState("");

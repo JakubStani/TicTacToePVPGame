@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import "./SignIn.css";
-import { CognitoUser, AuthenticationDetails } from "amazon-cognito-identity-js";
-import UserPool from "../../auth/UserPool";
 
 function SignIn(props) {
   const [nick, setNick] = useState("");
