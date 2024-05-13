@@ -7,8 +7,8 @@ const url = require("url");
 const uuidv4 = require("uuid").v4;
 
 const serverConfig = {
-  key: fs.readFileSync("/home/user/key.pem"),
-  cert: fs.readFileSync("/home/user/cert.pem"),
+  key: fs.readFileSync("/usr/src/backend/key.pem"),
+  cert: fs.readFileSync("/usr/src/backend/cert.pem"),
 };
 
 const server = https.createServer(serverConfig);
