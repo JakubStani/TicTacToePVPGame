@@ -180,43 +180,45 @@ const checkDraw = (gameBoardState) => {
 };
 
 const endGame = (gameUuid, gameResult, winner = null) => {
-  const user1 = users[gameboards[gameUuid]["X"]];
-  const user2 = users[gameboards[gameUuid]["O"]];
-  const uuid1 = user1["uuid"];
-  const uuid2 = user2["uuid"];
+  //we check this because one of the players could leave earlier and game does not exist anymore
+  if (gameboards[gameUuid] != null) {
+    const user1 = users[gameboards[gameUuid]["X"]];
+    const user2 = users[gameboards[gameUuid]["O"]];
+    const uuid1 = user1["uuid"];
+    const uuid2 = user2["uuid"];
 
-  user1["userState"] = "endedGame";
-  user2["userState"] = "endedGame";
+    user1["userState"] = "endedGame";
+    user2["userState"] = "endedGame";
 
-  console.log(`Game ${gameUuid} has ended. Winner is ${winner}`);
+    console.log(`Game ${gameUuid} has ended. Winner is ${winner}`);
 
-  const connection1 = connections[uuid1];
-  const connection2 = connections[uuid2];
-  // const gameState = JSON.stringify({gameData: gameData['state'], userData: user[uuid1]})
+    const connection1 = connections[uuid1];
+    const connection2 = connections[uuid2];
+    // const gameState = JSON.stringify({gameData: gameData['state'], userData: user[uuid1]})
 
-  connection1.send(
-    JSON.stringify({
-      kind: "endedGame",
-      gameState: gameboards[gameUuid]["state"],
-      userData: users[uuid1],
-      winner: users[winner] ? users[winner]["nick"] : null,
-      mark: "X",
-      gameResult: gameResult,
-    })
-  );
-  connection2.send(
-    JSON.stringify({
-      kind: "endedGame",
-      gameState: gameboards[gameUuid]["state"],
-      userData: users[uuid2],
-      winner: users[winner] ? users[winner]["nick"] : null,
-      mark: "O",
-      gameResult: gameResult,
-    })
-  );
+    connection1.send(
+      JSON.stringify({
+        kind: "endedGame",
+        gameState: gameboards[gameUuid]["state"],
+        userData: users[uuid1],
+        winner: users[winner] ? users[winner]["nick"] : null,
+        mark: "X",
+        gameResult: gameResult,
+      })
+    );
+    connection2.send(
+      JSON.stringify({
+        kind: "endedGame",
+        gameState: gameboards[gameUuid]["state"],
+        userData: users[uuid2],
+        winner: users[winner] ? users[winner]["nick"] : null,
+        mark: "O",
+        gameResult: gameResult,
+      })
+    );
 
-  delete gameboards[gameUuid];
-
+    delete gameboards[gameUuid];
+  }
   //send information to clients, that game ended and who is the winner
 };
 
@@ -330,13 +332,18 @@ const handleMessage = (bytes, uuid) => {
       playersInQueue.push(uuid);
       handleQueue(uuid);
       break;
-
+    case "leaveGame":
+      endGame(user["gameUuid"], "Game interrupted");
+      break;
     case "useRefreshToken":
       if (cognitoUser != null) {
         funUseRefreshToken(uuid, message["refreshToken"]);
       }
       break;
-
+    case "logOut":
+      user["nick"] = null;
+      user["session"] = null;
+      break;
     default:
       break;
   }
@@ -428,6 +435,7 @@ const notifyPlayers = (uuid1, cross, uuid2, circle, gameData) => {
       mark: circle,
     })
   );
+  console.log();
   // })
 };
 
@@ -471,6 +479,8 @@ wsServer.on("connection", (connection, request) => {
     gameUuid: "",
     isTheirRound: null,
     xOrC: null,
+    session: null,
+    lastMessage: null,
   };
 
   // playersInQueue.push(uuid);

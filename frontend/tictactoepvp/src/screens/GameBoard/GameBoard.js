@@ -11,6 +11,8 @@ function GameBoard({
   lastJsonMessage,
   sendJsonMessage,
   isAuthenticated,
+  uuid,
+  logOut,
 }) {
   //const [isMatchFound, setIsMatchFound] = useState(false)
 
@@ -51,60 +53,74 @@ function GameBoard({
     sendJsonMessage({
       option: "move",
       index: index,
-      accessToken: localStorage.getItem("accessToken-tttpvp"),
+      accessToken: localStorage.getItem(`accessToken-tttpvp-${uuid}`),
     });
   };
 
-  useEffect(() => {
-    if (lastJsonMessage) {
-      console.log(`Last json message: ${JSON.stringify(lastJsonMessage)}`);
-      // if(lastJsonMessage['kind']==='update') {
-      //   setGameState([...lastJsonMessage['gameState']])
-      //   setUserData(lastJsonMessage['userData'])
-      // }
+  useEffect(
+    () => {
+      if (lastJsonMessage) {
+        console.log(`Last json message: ${JSON.stringify(lastJsonMessage)}`);
+        // if(lastJsonMessage['kind']==='update') {
+        //   setGameState([...lastJsonMessage['gameState']])
+        //   setUserData(lastJsonMessage['userData'])
+        // }
 
-      if (lastJsonMessage["kind"] === "endedGame") {
-        setWinner(lastJsonMessage["winner"]);
-        setIsEnd(true);
-        setGameResult(lastJsonMessage["gameResult"]);
-      }
-      if (lastJsonMessage["kind"] === "accessTokenRequest") {
-        sendJsonMessage({
-          accessToken: localStorage.getItem("accessToken-tttpvp"),
-        });
-      }
-      if (
-        lastJsonMessage["kind"] != "endedGame" &&
-        lastJsonMessage["kind"] != "accessTokenRequest" &&
-        lastJsonMessage["kind"] != "signUpAnswer" &&
-        lastJsonMessage["kind"] != "signInAnswer" &&
-        lastJsonMessage["kind"] != "refreshTokenAnswer"
-      ) {
-        if (lastJsonMessage["kind"] == "moveError") {
-          console.error("Error:", lastJsonMessage["error"]);
-        } else {
-          setMark(lastJsonMessage["mark"]);
-          setGameState([...lastJsonMessage["gameState"]]);
-          setUserData(lastJsonMessage["userData"]);
-          setOpponentData(lastJsonMessage["opponentData"]);
+        if (lastJsonMessage["kind"] === "endedGame") {
+          setWinner(lastJsonMessage["winner"]);
+          setIsEnd(true);
+          setGameResult(lastJsonMessage["gameResult"]);
+        }
+        if (lastJsonMessage["kind"] === "accessTokenRequest") {
+          sendJsonMessage({
+            accessToken: localStorage.getItem(`accessToken-tttpvp-${uuid}`),
+          });
+        }
+        if (
+          lastJsonMessage["kind"] != "endedGame" &&
+          lastJsonMessage["kind"] != "accessTokenRequest" &&
+          lastJsonMessage["kind"] != "signUpAnswer" &&
+          lastJsonMessage["kind"] != "signInAnswer" &&
+          lastJsonMessage["kind"] != "refreshTokenAnswer"
+        ) {
+          if (lastJsonMessage["kind"] == "moveError") {
+            console.error("Error:", lastJsonMessage["error"]);
+          } else {
+            setIsEnd(false);
+            setMark(lastJsonMessage["mark"]);
+            setGameState([...lastJsonMessage["gameState"]]);
+            setUserData(lastJsonMessage["userData"]);
+            setOpponentData(lastJsonMessage["opponentData"]);
+            setGameResult(null);
 
-          // switch(lastJsonMessage['kind']) {
-          //   case 'update':
-          //     setGameState([...lastJsonMessage['gameState']])
-          //     setUserData(lastJsonMessage['userData'])
-          //     setOpponentData(lastJsonMessage['opponentData'])
-          //     break
-          //   case 'endedGame':
-          //     setGameState([...lastJsonMessage['gameState']])
-          //     setUserData(lastJsonMessage['userData'])
-          //     setOpponentData(lastJsonMessage['opponentData'])
-          //     setWinner(lastJsonMessage['winner'])
-          // }
+            console.log("udata", lastJsonMessage["userData"]);
+            console.log("shlg", shouldLoadGame);
+            console.log("isA", isAuthenticated);
+            console.log("gs", gameState);
+            console.log("ie", isEnd);
+            console.log("winner", winner);
+
+            // switch(lastJsonMessage['kind']) {
+            //   case 'update':
+            //     setGameState([...lastJsonMessage['gameState']])
+            //     setUserData(lastJsonMessage['userData'])
+            //     setOpponentData(lastJsonMessage['opponentData'])
+            //     break
+            //   case 'endedGame':
+            //     setGameState([...lastJsonMessage['gameState']])
+            //     setUserData(lastJsonMessage['userData'])
+            //     setOpponentData(lastJsonMessage['opponentData'])
+            //     setWinner(lastJsonMessage['winner'])
+            // }
+          }
         }
       }
-    }
-    console.log(`gamestate changed ${gameState}`);
-  }, [lastJsonMessage]);
+      console.log(`gamestate changed ${gameState}`);
+    },
+    [lastJsonMessage],
+    [gameState],
+    [isEnd]
+  );
 
   // const gameState = ['', '', '', '', '', '', '', '', ''];
 
@@ -195,20 +211,42 @@ function GameBoard({
               </div>
             ))}
           </div>
+          <button
+            onClick={() => {
+              setIsEnd(false);
+              setWinner(null);
+              setGameResult(null);
+              setShouldLoadGame(false);
+              setGameState(null);
+              sendJsonMessage({ option: "leaveGame" });
+            }}
+          >
+            Leave game
+          </button>
         </div>
       </div>
     ) : (
       <WaitForGame nick={nick} />
     )
   ) : isAuthenticated ? (
-    <button
-      onClick={() => {
-        setShouldLoadGame(true);
-        sendJsonMessage({ option: "loadGame" });
-      }}
-    >
-      Load game
-    </button>
+    <div>
+      <button
+        onClick={() => {
+          setShouldLoadGame(true);
+          sendJsonMessage({ option: "loadGame" });
+        }}
+      >
+        Load game
+      </button>
+      <button
+        onClick={() => {
+          logOut();
+          sendJsonMessage({ option: "logOut" });
+        }}
+      >
+        Log out
+      </button>
+    </div>
   ) : (
     <div>
       <h1>
