@@ -29,7 +29,7 @@ function App() {
   const [wsConnection, setWsConnection] = useState();
   const ipAddress = window.location.hostname;
   console.log("Adres IP instancji EC2:", ipAddress);
-  const [WS_URL, setWS_URL] = useState(`ws://${ipAddress}:8000`);
+  const [WS_URL, setWS_URL] = useState(`wss://${ipAddress}:443`);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const saveUserCredentials = (idToken, accessToken, refreshToken) => {
@@ -94,6 +94,9 @@ function App() {
           }
         } else {
           if (lastJsonMessage["kind"] == "sessionNotValid") {
+            console.log(
+              "Session is not valid. Sending refresh token request ..."
+            );
             funUseRefreshToken();
           }
         }

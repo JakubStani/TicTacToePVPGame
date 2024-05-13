@@ -1,14 +1,20 @@
 //TODO: skończyłem na tym, że trzeba teraz wstawiać access token do wiadomości ze strony frontu
-const http = require("http");
-const { WebSocketServer } = require("ws");
+const https = require("https");
+const WebSocket = require("ws");
+const fs = require("fs");
 
 const url = require("url");
 const uuidv4 = require("uuid").v4;
 
-const server = http.createServer();
+const serverConfig = {
+  key: fs.readFileSync("~/key.pem"),
+  cert: fs.readFileSync("~/cert.pem"),
+};
 
-const wsServer = new WebSocketServer({ server });
-const port = 8000;
+const server = https.createServer(serverConfig);
+
+const wssServer = new WebSocket.Server({ server });
+const port = 443;
 
 const connections = {};
 const users = {};
@@ -341,6 +347,7 @@ const handleMessage = (bytes, uuid) => {
       }
       break;
     case "logOut":
+      cognitoUser.signOut();
       user["nick"] = null;
       user["session"] = null;
       break;
@@ -459,7 +466,7 @@ const createAGame = (uuid1, uuid2) => {
 };
 
 //Dodaj te kroki: 1) z url wyciągnij access token, 2) sprawdź, czy jest to właściwy access token, 3) jeżeli niewłaściwy token, wyślij wiadomość, 4?) pomyśl nad braniem nicku z cognito,
-wsServer.on("connection", (connection, request) => {
+wssServer.on("connection", (connection, request) => {
   // const { nick } = url.parse(request.url, true).query;
   const uuid = uuidv4();
   // console.log(nick);
