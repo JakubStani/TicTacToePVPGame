@@ -48,7 +48,11 @@ function GameBoard({
 
   const makeAMove = (index) => {
     console.log(`${userData["nick"]} moved`);
-    sendJsonMessage({ option: "move", index: index });
+    sendJsonMessage({
+      option: "move",
+      index: index,
+      accessToken: localStorage.getItem("accessToken-tttpvp"),
+    });
   };
 
   useEffect(() => {
@@ -76,23 +80,27 @@ function GameBoard({
         lastJsonMessage["kind"] != "signInAnswer" &&
         lastJsonMessage["kind"] != "refreshTokenAnswer"
       ) {
-        setMark(lastJsonMessage["mark"]);
-        setGameState([...lastJsonMessage["gameState"]]);
-        setUserData(lastJsonMessage["userData"]);
-        setOpponentData(lastJsonMessage["opponentData"]);
+        if (lastJsonMessage["kind"] == "moveError") {
+          console.error("Error:", lastJsonMessage["error"]);
+        } else {
+          setMark(lastJsonMessage["mark"]);
+          setGameState([...lastJsonMessage["gameState"]]);
+          setUserData(lastJsonMessage["userData"]);
+          setOpponentData(lastJsonMessage["opponentData"]);
 
-        // switch(lastJsonMessage['kind']) {
-        //   case 'update':
-        //     setGameState([...lastJsonMessage['gameState']])
-        //     setUserData(lastJsonMessage['userData'])
-        //     setOpponentData(lastJsonMessage['opponentData'])
-        //     break
-        //   case 'endedGame':
-        //     setGameState([...lastJsonMessage['gameState']])
-        //     setUserData(lastJsonMessage['userData'])
-        //     setOpponentData(lastJsonMessage['opponentData'])
-        //     setWinner(lastJsonMessage['winner'])
-        // }
+          // switch(lastJsonMessage['kind']) {
+          //   case 'update':
+          //     setGameState([...lastJsonMessage['gameState']])
+          //     setUserData(lastJsonMessage['userData'])
+          //     setOpponentData(lastJsonMessage['opponentData'])
+          //     break
+          //   case 'endedGame':
+          //     setGameState([...lastJsonMessage['gameState']])
+          //     setUserData(lastJsonMessage['userData'])
+          //     setOpponentData(lastJsonMessage['opponentData'])
+          //     setWinner(lastJsonMessage['winner'])
+          // }
+        }
       }
     }
     console.log(`gamestate changed ${gameState}`);

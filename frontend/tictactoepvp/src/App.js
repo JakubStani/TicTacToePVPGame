@@ -45,8 +45,11 @@ function App() {
         lastJsonMessage["kind"] == "signInAnswer" ||
         lastJsonMessage["kind"] == "refreshTokenAnswer"
       ) {
-        setIsAuthenticated(true);
-        if (lastJsonMessage["data"] != null) {
+        if (
+          lastJsonMessage["data"] != null &&
+          lastJsonMessage["error"] == null
+        ) {
+          setIsAuthenticated(true);
           const data = lastJsonMessage["data"];
           saveUserCredentials(
             data["idToken"],
@@ -66,14 +69,20 @@ function App() {
         if (lastJsonMessage["kind"] == "signUpAnswer") {
           if (lastJsonMessage["error"] == null) {
             setShowSignIn(true);
+          } else {
+            console.error("Error:", lastJsonMessage["error"]);
+          }
+        } else {
+          if (lastJsonMessage["kind"] == "sessionNotValid") {
+            funUseRefreshToken();
           }
         }
       }
     }
   }, [lastJsonMessage]);
 
-  const useRefreshToken = () => {
-    let refreshToken = localStorage.getItem("refreshToken-tttpvp");
+  const funUseRefreshToken = () => {
+    const refreshToken = localStorage.getItem("refreshToken-tttpvp");
     if (refreshToken != null) {
       sendJsonMessage({
         option: "useRefreshToken",

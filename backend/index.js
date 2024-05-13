@@ -15,6 +15,8 @@ const users = {};
 const gameboards = {};
 const playersInQueue = [];
 
+var cognitoUser = null;
+
 //aws cognito
 
 const AWS = require("aws-sdk");
@@ -30,7 +32,7 @@ const poolData = {
 
 const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
 
-const signUp = (nick, email, password) => {
+const signUp = (uuid, nick, email, password) => {
   const attributeList = [
     new AmazonCognitoIdentity.CognitoUserAttribute({
       Name: "nickname",
@@ -45,88 +47,97 @@ const signUp = (nick, email, password) => {
   userPool.signUp(nick, password, attributeList, null, (error, data) => {
     if (error) {
       console.error(error);
-      answerUser(null, signUpConnection, "signUpAnswer", null, "Sign in error");
+      answerUser(null, signUpConnection, "signUpAnswer", null, error);
     } else {
-      signUpErrorMessage = null;
-      if (data != null) {
-        users[uuid]["nick"] = nick;
-        users[uuid]["session"] = data;
-      }
-      const toReturn = {
-        idToken: "jednakBez",
-        accessToken: data.getAccessToken().getJwtToken(),
-        refreshToken: data.getRefreshToken().getToken(),
-      };
-      answerUser(nick, signUpConnection, "signUpAnswer", toReturn, null);
+      answerUser(null, signUpConnection, "signUpAnswer", null, null);
     }
   });
 };
 
 const signIn = (uuid, nick, password) => {
   console.log(`trying to sign in with: ${nick} and ${password}`);
-  const cognitoUser = new AmazonCognitoIdentity.CognitoUser({
-    Username: nick,
-    Pool: userPool,
+  try {
+    cognitoUser = new AmazonCognitoIdentity.CognitoUser({
+      Username: nick,
+      Pool: userPool,
+    });
+
+    const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({
+      Username: nick,
+      Password: password,
+    });
+
+    const signInConnection = connections[uuid];
+    let toReturn = null;
+    cognitoUser.authenticateUser(authDetails, {
+      onSuccess: (session) => {
+        console.log("Success ", session);
+        users[uuid]["nick"] = nick;
+        users[uuid]["session"] = session;
+        toReturn = {
+          idToken: "jednakBez",
+          accessToken: session.getAccessToken().getJwtToken(),
+          refreshToken: session.getRefreshToken().getToken(),
+        };
+        answerUser(nick, signInConnection, "signInAnswer", toReturn, null);
+      },
+      onFailure: (error) => {
+        console.error("Error ", error);
+        answerUser(nick, signInConnection, "signInAnswer", toReturn, error);
+      },
+    });
+  } catch (error) {
+    console.error("Error ", error);
+    answerUser(nick, signInConnection, "signInAnswer", toReturn, error);
+  }
+};
+
+const validateAccessToken = (uuid, sendedAccessToken) => {
+  const user = users[uuid];
+
+  if (user["session"].getAccessToken().getJwtToken() == sendedAccessToken) {
+    return true;
+  }
+
+  return false;
+};
+
+const funUseRefreshToken = (uuid, refreshToken) => {
+  const user = users[uuid];
+  const typedRefreshToken = new AmazonCognitoIdentity.CognitoRefreshToken({
+    RefreshToken: refreshToken,
   });
 
-  const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({
-    Username: nick,
-    Password: password,
-  });
-  const signInConnection = connections[uuid];
-  let signInErrorMessage = "Sign in error";
-  let toReturn = null;
-  cognitoUser.authenticateUser(authDetails, {
-    onSuccess: (data) => {
-      console.log("Success ", data);
-      signInErrorMessage = null;
-      users[uuid]["nick"] = nick;
-
-      toReturn = {
+  cognitoUser.refreshSession(refreshToken, (error, session) => {
+    if (error) {
+      console.error("Error", error);
+      answerUser(
+        user["nick"],
+        connections[uuid],
+        "refreshTokenAnswer",
+        null,
+        error
+      );
+    } else {
+      user["session"] = session;
+      const messageWithNewAccessToken = JSON.parse(user["lastMessage"]);
+      user["lastMessage"] = null;
+      messageWithNewAccessToken["accessToken"] = session
+        .getAccessToken()
+        .getJwtToken();
+      const toReturn = {
         idToken: "jednakBez",
         accessToken: data.getAccessToken().getJwtToken(),
         refreshToken: data.getRefreshToken().getToken(),
       };
       answerUser(
-        nick,
-        signInConnection,
-        "signUpAnswer",
+        user["nick"],
+        connections[uuid],
+        "refreshTokenAnswer",
         toReturn,
-        signInErrorMessage
+        null
       );
-    },
-    onFailure: (error) => {
-      console.error("Error ", error);
-      answerUser(
-        nick,
-        signInConnection,
-        "signUpAnswer",
-        toReturn,
-        signInErrorMessage
-      );
-    },
-  });
-};
-
-const useRefreshToken = (refreshToken) => {
-  const user = new CognitoUser({
-    Username: nick,
-    Pool: userPool,
-  });
-  refreshToken = new AmazonCognitoIdentity.CognitoRefreshToken({
-    RefreshToken: refreshToken,
-  });
-  user.refreshSession(refreshToken, (error, session) => {
-    if (error) {
-      console.error("Error", error);
-    } else {
-      console.log(session);
-
-      return {
-        idToken: session.getIdToken().getJwtToken(),
-        accessToken: session.getAccessToken().getJwtToken(),
-        refreshToken: session.getRefreshToken().getToken(),
-      };
+      handleMessage(JSON.stringify(messageWithNewAccessToken), uuid);
     }
   });
 };
@@ -219,42 +230,71 @@ const handleMessage = (bytes, uuid) => {
   switch (message["option"]) {
     case "move":
       console.log("move?");
-      const gameBoard = gameboards[user["gameUuid"]];
+      if (user["session"].isValid()) {
+        if (validateAccessToken(uuid, message["accessToken"])) {
+          console.log("Access token się zgadza");
+          const gameBoard = gameboards[user["gameUuid"]];
 
-      //TODO: send clicked index
-      let crosOrCircle = null;
-      let opponent = null;
+          //TODO: send clicked index
+          let crosOrCircle = null;
+          let opponent = null;
 
-      // if(gameBoard[message['index']]==='') {
-      if (gameBoard["X"] === uuid) {
-        gameBoard["state"][message["index"]] = "X";
-        crosOrCircle = "X";
-        opponent = "O";
-      } else {
-        gameBoard["state"][message["index"]] = "O";
-        crosOrCircle = "O";
-        opponent = "X";
-      }
-      console.log(`aktualny gamestate: ${gameBoard["state"]}`);
-      //TODO: notify, whose turn it is
-      users[uuid]["isTheirRound"] = !users[uuid]["isTheirRound"];
-      users[gameBoard[opponent]]["isTheirRound"] =
-        !users[gameBoard[opponent]]["isTheirRound"];
-      notifyPlayers(
-        uuid,
-        crosOrCircle === "X" ? "X" : "O",
-        gameBoard[opponent],
-        opponent === "O" ? "O" : "X",
-        gameBoard
-      );
-      if (checkWin(gameBoard["state"], crosOrCircle)) {
-        console.log("wygrana");
-        endGame(user["gameUuid"], "Win", uuid);
-      } else {
-        if (checkDraw(gameBoard["state"])) {
-          console.log("remis");
-          endGame(user["gameUuid"], "Draw");
+          // if(gameBoard[message['index']]==='') {
+          if (gameBoard["X"] === uuid) {
+            gameBoard["state"][message["index"]] = "X";
+            crosOrCircle = "X";
+            opponent = "O";
+          } else {
+            gameBoard["state"][message["index"]] = "O";
+            crosOrCircle = "O";
+            opponent = "X";
+          }
+          console.log(`aktualny gamestate: ${gameBoard["state"]}`);
+          //TODO: notify, whose turn it is
+          users[uuid]["isTheirRound"] = !users[uuid]["isTheirRound"];
+          users[gameBoard[opponent]]["isTheirRound"] =
+            !users[gameBoard[opponent]]["isTheirRound"];
+          notifyPlayers(
+            uuid,
+            crosOrCircle === "X" ? "X" : "O",
+            gameBoard[opponent],
+            opponent === "O" ? "O" : "X",
+            gameBoard
+          );
+          if (checkWin(gameBoard["state"], crosOrCircle)) {
+            console.log("wygrana");
+            endGame(user["gameUuid"], "Win", uuid);
+          } else {
+            if (checkDraw(gameBoard["state"])) {
+              console.log("remis");
+              endGame(user["gameUuid"], "Draw");
+            }
+          }
+        } else {
+          console.log(
+            "Invalid access token",
+            message["accessToken"],
+            "właściwy access token:",
+            user["session"].getAccessToken().getJwtToken()
+          );
+          answerUser(
+            null,
+            connections[uuid],
+            "moveError",
+            null,
+            "Invalid access token when session is valid"
+          );
         }
+      } else {
+        console.log("Sesja nie jest ważna");
+        user["lastMessage"] = JSON.stringify(message);
+        answerUser(
+          null,
+          connections[uuid],
+          "sessionNotValid",
+          null,
+          "Connection is not valid anymore. Please provide refreshToken to refresh the session"
+        );
       }
 
       // }
@@ -263,6 +303,7 @@ const handleMessage = (bytes, uuid) => {
     case "signUp":
       console.log("signUp?");
       const signUpData = signUp(
+        uuid,
         message["nick"],
         message["email"],
         message["password"]
@@ -271,23 +312,29 @@ const handleMessage = (bytes, uuid) => {
 
     case "signIn":
       console.log("signIn?");
-      const signInData = signIn(uuid, message["nick"], message["password"]);
+      signIn(uuid, message["nick"], message["password"]);
       break;
-    case "useRefreshToken":
-      const refreshTokenData = useRefreshToken(message["refreshToken"]);
-      const refreshTokenConnection = connections[uuid];
-      answerUser(
-        nick,
-        refreshTokenConnection,
-        "signUpAnswer",
-        refreshTokenData,
-        refreshTokenData != null ? null : "Refresh token error"
-      );
-      break;
+    // case "useRefreshToken":
+    //   const refreshTokenData = useRefreshToken(message["refreshToken"]);
+    //   const refreshTokenConnection = connections[uuid];
+    //   answerUser(
+    //     nick,
+    //     refreshTokenConnection,
+    //     "signUpAnswer",
+    //     refreshTokenData,
+    //     refreshTokenData != null ? null : "Refresh token error"
+    //   );
+    //   break;
     case "loadGame":
       console.log("load game request");
       playersInQueue.push(uuid);
       handleQueue(uuid);
+      break;
+
+    case "useRefreshToken":
+      if (cognitoUser != null) {
+        funUseRefreshToken(uuid, message["refreshToken"]);
+      }
       break;
 
     default:
