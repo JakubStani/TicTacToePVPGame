@@ -84,7 +84,7 @@ function GameBoard({
           lastJsonMessage["kind"] != "refreshTokenAnswer" &&
           lastJsonMessage["kind"] != "sessionNotValid"
         ) {
-          if (lastJsonMessage["kind"] == "moveError") {
+          if (lastJsonMessage["kind"] == "requestError") {
             console.error("Error:", lastJsonMessage["error"]);
           } else {
             setIsEnd(false);
@@ -219,7 +219,10 @@ function GameBoard({
               setGameResult(null);
               setShouldLoadGame(false);
               setGameState(null);
-              sendJsonMessage({ option: "leaveGame" });
+              sendJsonMessage({
+                option: "leaveGame",
+                accessToken: localStorage.getItem(`accessToken-tttpvp-${uuid}`),
+              });
             }}
           >
             Leave game
@@ -234,7 +237,10 @@ function GameBoard({
       <button
         onClick={() => {
           setShouldLoadGame(true);
-          sendJsonMessage({ option: "loadGame" });
+          sendJsonMessage({
+            option: "loadGame",
+            accessToken: localStorage.getItem(`accessToken-tttpvp-${uuid}`),
+          });
         }}
       >
         Load game
@@ -242,7 +248,10 @@ function GameBoard({
       <button
         onClick={() => {
           logOut();
-          sendJsonMessage({ option: "logOut" });
+          sendJsonMessage({
+            option: "logOut",
+            accessToken: localStorage.getItem(`accessToken-tttpvp-${uuid}`),
+          });
         }}
       >
         Log out
