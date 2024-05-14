@@ -62,6 +62,7 @@ function App() {
         ) {
           setIsAuthenticated(true);
           const data = lastJsonMessage["data"];
+          console.log("saving new credentials");
           saveUserCredentials(
             data["idToken"],
             data["accessToken"],

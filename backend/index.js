@@ -6,9 +6,14 @@ const fs = require("fs");
 const url = require("url");
 const uuidv4 = require("uuid").v4;
 
+// const serverConfig = {
+//   key: fs.readFileSync("/usr/src/backend/key.pem"),
+//   cert: fs.readFileSync("/usr/src/backend/cert.pem"),
+// };
+
 const serverConfig = {
-  key: fs.readFileSync("/usr/src/backend/key.pem"),
-  cert: fs.readFileSync("/usr/src/backend/cert.pem"),
+  key: fs.readFileSync("C:/Users/Jakub/key.pem"),
+  cert: fs.readFileSync("C:/Users/Jakub/cert.pem"),
 };
 
 const server = https.createServer(serverConfig);
@@ -114,7 +119,7 @@ const funUseRefreshToken = (uuid, refreshToken) => {
     RefreshToken: refreshToken,
   });
 
-  cognitoUser.refreshSession(refreshToken, (error, session) => {
+  cognitoUser.refreshSession(typedRefreshToken, (error, session) => {
     if (error) {
       console.error("Error", error);
       answerUser(
@@ -133,8 +138,8 @@ const funUseRefreshToken = (uuid, refreshToken) => {
         .getJwtToken();
       const toReturn = {
         idToken: "jednakBez",
-        accessToken: data.getAccessToken().getJwtToken(),
-        refreshToken: data.getRefreshToken().getToken(),
+        accessToken: session.getAccessToken().getJwtToken(),
+        refreshToken: session.getRefreshToken().getToken(),
       };
       answerUser(
         user["nick"],

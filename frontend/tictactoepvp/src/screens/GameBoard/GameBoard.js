@@ -81,7 +81,8 @@ function GameBoard({
           lastJsonMessage["kind"] != "accessTokenRequest" &&
           lastJsonMessage["kind"] != "signUpAnswer" &&
           lastJsonMessage["kind"] != "signInAnswer" &&
-          lastJsonMessage["kind"] != "refreshTokenAnswer"
+          lastJsonMessage["kind"] != "refreshTokenAnswer" &&
+          lastJsonMessage["kind"] != "sessionNotValid"
         ) {
           if (lastJsonMessage["kind"] == "moveError") {
             console.error("Error:", lastJsonMessage["error"]);
