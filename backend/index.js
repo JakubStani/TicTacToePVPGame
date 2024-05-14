@@ -26,8 +26,6 @@ const users = {};
 const gameboards = {};
 const playersInQueue = [];
 
-var cognitoUser = null;
-
 //aws cognito
 
 const AWS = require("aws-sdk");
@@ -42,6 +40,8 @@ const poolData = {
 };
 
 const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+var cognitoUser = null;
 
 const signUp = (uuid, nick, email, password) => {
   const attributeList = [
@@ -240,128 +240,133 @@ const handleMessage = (bytes, uuid) => {
 
   // console.log(message);
 
-  switch (message["option"]) {
-    case "move":
-      // console.log("move?");
-      if (user["session"].isValid()) {
-        if (validateAccessToken(uuid, message["accessToken"])) {
-          // console.log("Access token się zgadza");
-          const gameBoard = gameboards[user["gameUuid"]];
+  let requestAuthorized = false;
 
-          //TODO: send clicked index
-          let crosOrCircle = null;
-          let opponent = null;
-
-          // if(gameBoard[message['index']]==='') {
-          if (gameBoard["X"] === uuid) {
-            gameBoard["state"][message["index"]] = "X";
-            crosOrCircle = "X";
-            opponent = "O";
-          } else {
-            gameBoard["state"][message["index"]] = "O";
-            crosOrCircle = "O";
-            opponent = "X";
-          }
-          // console.log(`aktualny gamestate: ${gameBoard["state"]}`);
-          //TODO: notify, whose turn it is
-          users[uuid]["isTheirRound"] = !users[uuid]["isTheirRound"];
-          users[gameBoard[opponent]]["isTheirRound"] =
-            !users[gameBoard[opponent]]["isTheirRound"];
-          notifyPlayers(
-            uuid,
-            crosOrCircle === "X" ? "X" : "O",
-            gameBoard[opponent],
-            opponent === "O" ? "O" : "X",
-            gameBoard
-          );
-          if (checkWin(gameBoard["state"], crosOrCircle)) {
-            // console.log("wygrana");
-            endGame(user["gameUuid"], "Win", uuid);
-          } else {
-            if (checkDraw(gameBoard["state"])) {
-              // console.log("remis");
-              endGame(user["gameUuid"], "Draw");
-            }
-          }
-        } else {
-          // console.log(
-          //   "Invalid access token",
-          //   message["accessToken"],
-          //   "właściwy access token:",
-          //   user["session"].getAccessToken().getJwtToken()
-          // );
-          answerUser(
-            null,
-            connections[uuid],
-            "moveError",
-            null,
-            "Invalid access token when session is valid"
-          );
-        }
+  if (
+    message["option"] == "move" ||
+    message["option"] == "loadGame" ||
+    message["option"] == "leaveGame" ||
+    message["option"] == "logOut"
+  ) {
+    if (user["session"].isValid()) {
+      if (validateAccessToken(uuid, message["accessToken"])) {
+        requestAuthorized = true;
       } else {
-        // console.log("Sesja nie jest ważna");
-        user["lastMessage"] = JSON.stringify(message);
-        answerUser(
-          null,
-          connections[uuid],
-          "sessionNotValid",
-          null,
-          "Connection is not valid anymore. Please provide refreshToken to refresh the session"
+        console.log(user["session"].getAccessToken().getJwtToken());
+        console.log(message["accessToken"]);
+        sendInvalidAccessTokenMessage(uuid);
+      }
+    } else {
+      sendMessageSessionNotValid(uuid, message);
+    }
+  } else {
+    requestAuthorized = true;
+  }
+
+  if (requestAuthorized) {
+    switch (message["option"]) {
+      case "move":
+        // console.log("Access token się zgadza");
+        const gameBoard = gameboards[user["gameUuid"]];
+
+        //TODO: send clicked index
+        let crosOrCircle = null;
+        let opponent = null;
+
+        // if(gameBoard[message['index']]==='') {
+        if (gameBoard["X"] === uuid) {
+          gameBoard["state"][message["index"]] = "X";
+          crosOrCircle = "X";
+          opponent = "O";
+        } else {
+          gameBoard["state"][message["index"]] = "O";
+          crosOrCircle = "O";
+          opponent = "X";
+        }
+        // console.log(`aktualny gamestate: ${gameBoard["state"]}`);
+        //TODO: notify, whose turn it is
+        users[uuid]["isTheirRound"] = !users[uuid]["isTheirRound"];
+        users[gameBoard[opponent]]["isTheirRound"] =
+          !users[gameBoard[opponent]]["isTheirRound"];
+        notifyPlayers(
+          uuid,
+          crosOrCircle === "X" ? "X" : "O",
+          gameBoard[opponent],
+          opponent === "O" ? "O" : "X",
+          gameBoard
         );
-      }
+        if (checkWin(gameBoard["state"], crosOrCircle)) {
+          // console.log("wygrana");
+          endGame(user["gameUuid"], "Win", uuid);
+        } else {
+          if (checkDraw(gameBoard["state"])) {
+            // console.log("remis");
+            endGame(user["gameUuid"], "Draw");
+          }
+        }
+        // }
+        break;
+      case "signUp":
+        // console.log("signUp?");
+        const signUpData = signUp(
+          uuid,
+          message["nick"],
+          message["email"],
+          message["password"]
+        );
+        break;
 
-      // }
-      break;
-
-    case "signUp":
-      // console.log("signUp?");
-      const signUpData = signUp(
-        uuid,
-        message["nick"],
-        message["email"],
-        message["password"]
-      );
-      break;
-
-    case "signIn":
-      // console.log("signIn?");
-      signIn(uuid, message["nick"], message["password"]);
-      break;
-    // case "useRefreshToken":
-    //   const refreshTokenData = useRefreshToken(message["refreshToken"]);
-    //   const refreshTokenConnection = connections[uuid];
-    //   answerUser(
-    //     nick,
-    //     refreshTokenConnection,
-    //     "signUpAnswer",
-    //     refreshTokenData,
-    //     refreshTokenData != null ? null : "Refresh token error"
-    //   );
-    //   break;
-    case "loadGame":
-      // console.log("load game request");
-      playersInQueue.push(uuid);
-      handleQueue(uuid);
-      break;
-    case "leaveGame":
-      endGame(user["gameUuid"], "Game interrupted");
-      break;
-    case "useRefreshToken":
-      if (cognitoUser != null) {
-        funUseRefreshToken(uuid, message["refreshToken"]);
-      }
-      break;
-    case "logOut":
-      cognitoUser.signOut();
-      user["nick"] = null;
-      user["session"] = null;
-      break;
-    default:
-      break;
+      case "signIn":
+        // console.log("signIn?");
+        signIn(uuid, message["nick"], message["password"]);
+        break;
+      case "loadGame":
+        // console.log("load game request");
+        playersInQueue.push(uuid);
+        handleQueue(uuid);
+        break;
+      case "leaveGame":
+        endGame(user["gameUuid"], "Game interrupted");
+        break;
+      case "useRefreshToken":
+        if (cognitoUser != null) {
+          funUseRefreshToken(uuid, message["refreshToken"]);
+        }
+        break;
+      case "logOut":
+        cognitoUser.signOut();
+        user["nick"] = null;
+        user["session"] = null;
+        break;
+      default:
+        break;
+    }
   }
 
   //here make switch that depend on a message
   //do not forgot about notifyPlayers()
+};
+
+const sendInvalidAccessTokenMessage = (uuid) => {
+  answerUser(
+    null,
+    connections[uuid],
+    "requestError",
+    null,
+    "Invalid access token when session is valid"
+  );
+};
+
+const sendMessageSessionNotValid = (uuid, message) => {
+  // console.log("Sesja nie jest ważna");
+  users[uuid]["lastMessage"] = JSON.stringify(message);
+  answerUser(
+    null,
+    connections[uuid],
+    "sessionNotValid",
+    null,
+    "Connection is not valid anymore. Please provide refreshToken to refresh the session"
+  );
 };
 
 const answerUser = (nick, connection, messageKind, data, errorMessage) => {
@@ -381,22 +386,6 @@ const handleClose = (uuid) => {
 
   //not only delete user, but end game too
   if (user["userState"] === "playing") {
-    // let user2=null
-
-    // //end game
-    // if(closedGame!==null) {
-    //     if(closedGame['X'] === uuid) {
-    //         user2 = closedGame['O']
-    //     } else {
-    //         user2 = closedGame['X']
-    //     }
-
-    //     user2['userState'] = 'endedGame'
-    //     user2['gameUuid'] = ''
-    // }
-
-    // delete gameboards[user['gameUuid']]
-
     endGame(user["gameUuid"], "Game interrupted");
   }
   //delete user from queue
