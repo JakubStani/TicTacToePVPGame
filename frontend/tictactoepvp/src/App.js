@@ -23,8 +23,7 @@ function App() {
   const [WS_URL, setWS_URL] = useState(`wss://${ipAddress}:443`);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const saveUserCredentials = (idToken, accessToken, refreshToken) => {
-    // localStorage.setItem(`idToken-tttpvp-${uuid}`, idToken);
+  const saveUserCredentials = (accessToken, refreshToken) => {
     localStorage.setItem(`accessToken-tttpvp-${uuid}`, accessToken);
     localStorage.setItem(`refreshToken-tttpvp-${uuid}`, refreshToken);
   };
@@ -63,11 +62,7 @@ function App() {
           setIsAuthenticated(true);
           const data = lastJsonMessage["data"];
           console.log("saving new credentials");
-          saveUserCredentials(
-            data["idToken"],
-            data["accessToken"],
-            data["refreshToken"]
-          );
+          saveUserCredentials(data["accessToken"], data["refreshToken"]);
           if (!isAuthenticationRequested) {
             setIsAuthenticationRequested(true);
           }
