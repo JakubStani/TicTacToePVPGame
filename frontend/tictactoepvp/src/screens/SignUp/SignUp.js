@@ -15,33 +15,6 @@ function SignUp(props) {
       email: email,
       password: password,
     });
-
-    // const attributeList = [
-    //   new AmazonCognitoIdentity.CognitoUserAttribute({
-    //     Name: "nickname",
-    //     Value: nick,
-    //   }),
-    //   new AmazonCognitoIdentity.CognitoUserAttribute({
-    //     Name: "email",
-    //     Value: email,
-    //   }),
-    // ];
-
-    // UserPool.signUp(nick, password, attributeList, null, (error, data) => {
-    //   if (error) {
-    //     console.error(error);
-    //   }
-    //   console.log(data);
-
-    //   props.saveUserCredentials(
-    //     data.getIdToken().getJwtToken(),
-    //     data.getAccessToken().getJwtToken(),
-    //     data.getRefreshToken().getToken()
-    //   );
-    // });
-
-    // props.setIsAuthenticated(true);
-    // props.setShowSignIn(true);
   };
 
   return (

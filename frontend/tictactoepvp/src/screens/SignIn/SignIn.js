@@ -13,36 +13,6 @@ function SignIn(props) {
       nick: nick,
       password: password,
     });
-
-    // const user = new CognitoUser({
-    //   Username: nick,
-    //   Pool: UserPool,
-    // });
-
-    // const authDetails = new AuthenticationDetails({
-    //   Username: nick,
-    //   Password: password,
-    // });
-
-    // user.authenticateUser(authDetails, {
-    //   onSuccess: (data) => {
-    //     console.log("Success ", data);
-
-    //     props.saveUserCredentials(
-    //       data.getIdToken().getJwtToken(),
-    //       data.getAccessToken().getJwtToken(),
-    //       data.getRefreshToken().getToken()
-    //     );
-    //     console.log(data.isValid());
-    //     //localStorage.setItem('accessToken-tttpvp', data[])
-    //   },
-    //   onFailure: (error) => {
-    //     console.error("Error ", error);
-    //   },
-    // });
-
-    // props.setIsAuthenticated(true);
-    // props.setShowSignIn(true);
   };
 
   return (
