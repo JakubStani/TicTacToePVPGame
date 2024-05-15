@@ -4,6 +4,7 @@ import "./SignIn.css";
 function SignIn(props) {
   const [nick, setNick] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmationCode, setConfirmationCode] = useState("");
 
   const onSubmit = (event) => {
     event.preventDefault();
@@ -38,6 +39,23 @@ function SignIn(props) {
 
       <div>
         <button onClick={() => props.setShowSignIn(false)}>SignUp</button>
+      </div>
+      <label>If you have just registered, enter your confirmation code</label>
+      <input
+        type="text"
+        value={confirmationCode}
+        onChange={(event) => setConfirmationCode(event.target.value)}
+      />
+      <label>and nick</label>
+      <input
+        type="text"
+        value={nick}
+        onChange={(event) => setNick(event.target.value)}
+      />
+      <div>
+        <button onClick={() => props.confirmCode(nick, confirmationCode)}>
+          Confirm registration code
+        </button>
       </div>
     </div>
   );

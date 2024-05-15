@@ -54,6 +54,12 @@ const signUp = (uuid, nick, email, password) => {
       Value: email,
     }),
   ];
+
+  cognitoUser = new AmazonCognitoIdentity.CognitoUser({
+    Username: nick,
+    Pool: userPool,
+  });
+
   const signUpConnection = connections[uuid];
   userPool.signUp(nick, password, attributeList, null, (error, data) => {
     if (error) {
@@ -338,6 +344,10 @@ const handleMessage = (bytes, uuid) => {
         user["nick"] = null;
         user["session"] = null;
         break;
+      case "confirmRegistration":
+        console.log(message);
+        confirmCode(uuid, message["nick"], message["confirmationCode"]);
+        console.log("conf code", message["confirmationCode"], message["nick"]);
       default:
         break;
     }
@@ -345,6 +355,28 @@ const handleMessage = (bytes, uuid) => {
 
   //here make switch that depend on a message
   //do not forgot about notifyPlayers()
+};
+
+const confirmCode = (uuid, nick, confirmationCode) => {
+  cognitoUser = new AmazonCognitoIdentity.CognitoUser({
+    Username: nick,
+    Pool: userPool,
+  });
+
+  cognitoUser.confirmRegistration(confirmationCode, true, (error, result) => {
+    if (error) {
+      console.log(error);
+      answerUser(
+        null,
+        connections[uuid],
+        "requestError",
+        null,
+        `Error: ${error}`
+      );
+    } else {
+      console.log(`New user has confirmed registeration`);
+    }
+  });
 };
 
 const sendInvalidAccessTokenMessage = (uuid) => {

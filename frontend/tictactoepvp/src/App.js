@@ -102,6 +102,15 @@ function App() {
     return false;
   };
 
+  const confirmCode = (nick, confirmationCode) => {
+    sendJsonMessage({
+      option: "confirmRegistration",
+      nick: nick,
+      confirmationCode: confirmationCode,
+    });
+    console.log("sending ", confirmationCode);
+  };
+
   // axios.get('http://169.254.169.254/latest/meta-data/public-ipv4')
   //     .then(response => {
   //       console.log(`Public IP: ${response.data}`)
@@ -143,6 +152,7 @@ function App() {
               saveUserCredentials={saveUserCredentials}
               lastJsonMessage={lastJsonMessage}
               sendJsonMessage={sendJsonMessage}
+              confirmCode={confirmCode}
             />
           ) : (
             <SignUp
